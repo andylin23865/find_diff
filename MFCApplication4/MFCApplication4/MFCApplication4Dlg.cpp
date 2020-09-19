@@ -11,6 +11,9 @@
 #include <atlstr.h>
 #include <Windows.h>
 #include <process.h>
+#include <direct.h>
+#include <queue>
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -21,6 +24,12 @@
 int g_proAll = 0;
 int g_proOne = 0;
 bool update = true;
+
+#define MAX_CNT 3
+
+queue<string> inputList1;
+queue<string> inputList2;
+string savePath = "path.txt";
 
 DWORD WINAPI UpdateThread(LPVOID lpParam)
 {
@@ -81,6 +90,8 @@ class CAboutDlg : public CDialogEx
 {
 public:
 	CAboutDlg();
+	~CAboutDlg() {
+	}
 
 // 对话框数据
 #ifdef AFX_DESIGN_TIME
@@ -140,6 +151,8 @@ void CMFCApplication4Dlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT3, m_outStr);
 	DDX_Control(pDX, IDC_PROGRESS1, m_progressAll);
 	DDX_Control(pDX, IDC_PROGRESS2, m_progressOne);
+	DDX_Control(pDX, IDC_COMBO3, m_comInput);
+	DDX_Control(pDX, IDC_COMBO5, m_comInput2);
 }
 
 BEGIN_MESSAGE_MAP(CMFCApplication4Dlg, CDialogEx)
@@ -213,8 +226,52 @@ BOOL CMFCApplication4Dlg::OnInitDialog()
 	// TODO: 在此添加额外的初始化代码
 	ChangeWindowMessageFilter(WM_DROPFILES, MSGFLT_ADD);
 	ChangeWindowMessageFilter(0x0049, MSGFLT_ADD);
+	m_comInput.ShowWindow(FALSE);
+	m_comInput2.ShowWindow(FALSE);
+
+	char buffer[MAX_PATH];
+	_getcwd(buffer, MAX_PATH);
+	savePath = string(buffer) + "\\"+ savePath;
+
+	std::ifstream	OsRead(savePath, std::ofstream::app);
+	int size1 = 0, size2 = 0;
+	OsRead >> size1 >> size2;
+	for (int i = 0; i < size1; i++) {
+		OsRead >> buffer;
+		inputList1.push(buffer);
+	}
+	for (int i = 0; i < size2; i++) {
+		OsRead >> buffer;
+		inputList2.push(buffer);
+	}
+	//inputList2.push("555");
+	OsRead.close();
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
+}
+
+void CMFCApplication4Dlg::OnCancel()
+{
+	save();
+	CDialogEx::OnCancel();
+}
+
+void CMFCApplication4Dlg::save()
+{
+	remove(savePath.c_str());
+	std::ofstream	OsWrite(savePath, std::ofstream::app);
+	OsWrite << inputList1.size() << " " << inputList2.size() << endl;
+	int size1 = inputList1.size();
+	int size2 = inputList2.size();
+	for (int i = 0; i < size1; i++) {
+		OsWrite << inputList1.front().c_str() << endl;
+		inputList1.pop();
+	}
+	for (int i = 0; i < size2; i++) {
+		OsWrite << inputList2.front().c_str() << endl;
+		inputList2.pop();
+	}
+	OsWrite.close();
 }
 
 void CMFCApplication4Dlg::OnSysCommand(UINT nID, LPARAM lParam)
@@ -376,6 +433,15 @@ void CMFCApplication4Dlg::OnEnChangeInputFile1()
 	// 同时将 ENM_CHANGE 标志“或”运算到掩码中。
 
 	// TODO:  在此添加控件通知处理程序代码
+	string t = (m_inputFile1.GetString());
+	if (inputList1.size() >= MAX_CNT) {
+		inputList1.pop();
+		inputList1.push(string(CT2A(m_inputFile1.GetString())));
+	}
+	else {
+		inputList1.push(string(CT2A(m_inputFile1.GetString())));
+	}
+
 	UpdateData();
 	UpdateData(FALSE);
 }

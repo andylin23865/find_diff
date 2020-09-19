@@ -8,6 +8,15 @@
 #include <io.h>
 #include <vector>
 #include <windows.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+bool is_dir(const char* path) {
+	struct _stat buf = { 0 };
+	_stat(path, &buf);
+	return buf.st_mode & _S_IFDIR;
+}
+
 
 using namespace std;
 
@@ -107,6 +116,10 @@ bool isSame(string file1, string file2) {
 
 void getFiles(string path, vector<string>& files)
 {
+	if (!is_dir(path.c_str())) {//如果是文件路径
+		files.push_back(path);
+		return;
+	}
 	intptr_t   hFile = 0;//文件句柄，过会儿用来查找
 	struct _finddata_t fileinfo;//文件信息
 	string p;
