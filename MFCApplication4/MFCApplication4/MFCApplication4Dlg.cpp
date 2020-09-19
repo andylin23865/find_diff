@@ -27,8 +27,8 @@ bool update = true;
 
 #define MAX_CNT 3
 
-queue<string> inputList1;
-queue<string> inputList2;
+vector<string> inputList1;
+vector<string> inputList2;
 string savePath = "path.txt";
 
 DWORD WINAPI UpdateThread(LPVOID lpParam)
@@ -238,11 +238,11 @@ BOOL CMFCApplication4Dlg::OnInitDialog()
 	OsRead >> size1 >> size2;
 	for (int i = 0; i < size1; i++) {
 		OsRead >> buffer;
-		inputList1.push(buffer);
+		inputList1.push_back(buffer);
 	}
 	for (int i = 0; i < size2; i++) {
 		OsRead >> buffer;
-		inputList2.push(buffer);
+		inputList2.push_back(buffer);
 	}
 	//inputList2.push("555");
 	OsRead.close();
@@ -264,12 +264,10 @@ void CMFCApplication4Dlg::save()
 	int size1 = inputList1.size();
 	int size2 = inputList2.size();
 	for (int i = 0; i < size1; i++) {
-		OsWrite << inputList1.front().c_str() << endl;
-		inputList1.pop();
+		OsWrite << inputList1[i].c_str() << endl;
 	}
 	for (int i = 0; i < size2; i++) {
-		OsWrite << inputList2.front().c_str() << endl;
-		inputList2.pop();
+		OsWrite << inputList2[i].c_str() << endl;
 	}
 	OsWrite.close();
 }
@@ -433,17 +431,23 @@ void CMFCApplication4Dlg::OnEnChangeInputFile1()
 	// 同时将 ENM_CHANGE 标志“或”运算到掩码中。
 
 	// TODO:  在此添加控件通知处理程序代码
-	string t = (m_inputFile1.GetString());
-	if (inputList1.size() >= MAX_CNT) {
-		inputList1.pop();
-		inputList1.push(string(CT2A(m_inputFile1.GetString())));
-	}
-	else {
-		inputList1.push(string(CT2A(m_inputFile1.GetString())));
-	}
-
 	UpdateData();
 	UpdateData(FALSE);
+	string t = (m_inputFile1.GetString());
+	if (inputList1.size() >= MAX_CNT) {
+		inputList1.erase(inputList1.begin());
+		inputList1.push_back(t);
+	}
+	else {
+		inputList1.push_back(t);
+	}
+	for (int i = 0; i < inputList1.size(); i++) {
+		m_comInput.AddString(inputList1[i].c_str());
+	}
+	m_comInput.SetCurSel(inputList1.size() - 1);
+	UpdateData();
+	UpdateData(FALSE);
+	m_comInput.ShowWindow(TRUE);
 }
 
 
@@ -457,6 +461,21 @@ void CMFCApplication4Dlg::OnEnChangeInputFile2()
 	// TODO:  在此添加控件通知处理程序代码
 	UpdateData();
 	UpdateData(FALSE);
+	string t = (m_inputFile2.GetString());
+	if (inputList2.size() >= MAX_CNT) {
+		inputList2.erase(inputList2.begin());
+		inputList2.push_back(t);
+	}
+	else {
+		inputList2.push_back(t);
+	}
+	for (int i = 0; i < inputList2.size(); i++) {
+		m_comInput2.AddString(inputList2[i].c_str());
+	}
+	m_comInput2.SetCurSel(inputList2.size() - 1);
+	UpdateData();
+	UpdateData(FALSE);
+	m_comInput2.ShowWindow(TRUE);
 }
 
 
@@ -518,3 +537,4 @@ void CMFCApplication4Dlg::OnTimer(UINT_PTR nIDEvent)
 	//SetDlgItemText(IDC_TIME, strTime);        //显示系统时
 	CDialogEx::OnTimer(nIDEvent);
 }
+
